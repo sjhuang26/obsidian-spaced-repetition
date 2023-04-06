@@ -1,8 +1,10 @@
 import {CardType} from "src/scheduling";
 
-type RecallState = ["OFF"] | ["ON"] | ["ON", number];
+type RecallState = ["OFF"] | ["ON", null] | ["ON", number];
 
 type CardState = ["OFF"] | ["ON"];
+
+export type ParseCard = [CardType, string, number, string];
 
 /**
  * Returns flashcards found in `text`
@@ -23,53 +25,63 @@ export function parse(
     convertHighlightsToClozes: boolean,
     convertBoldTextToClozes: boolean,
     convertCurlyBracketsToClozes: boolean
-): [CardType, string, number][] {
-    const cards: [CardType, string, number][] = [];
+): ParseCard[] {
+    const cards: ParseCard[] = [];
 
     const lines: string[] = text.replaceAll("\r\n", "\n").split("\n");
     let recallActive: RecallState = ["OFF"];
     let cardState: CardState = ["OFF"];
     let cardBody: string[] = [];
+    let cardBefore = "";
+    let cardLineNo = 0;
 
     for (let i = 0; i < lines.length; i++) {
-        // check if has a #recall/ tag
-        const hasRecallTag = lines[i].includes("#recall/");
+        // check if has a #recall/ or #/recall tag
+        const hasRecallTag = lines[i].includes("#recall/") || lines[i].includes("#/recall");
 
         // beginning-of-file logic
         if (i === 0 && hasRecallTag) {
-            recallActive = ["ON"];
+            recallActive = ["ON", null];
         }
 
         // calculate indent level (tabs) w regex
         const indentLevel = lines[i].search(/\S|$/);
 
-        // check if header
-        const isHeader = lines[i].startsWith("#");
+        // represents header: 0 for no header; 1, 2, 3, etc. for header level
+        // count # at beginning of line
+        const headerLevel = lines[i].match(/^#+/)?.[0].length ?? 0;
 
-        // out-of-header logic
-        if (recallActive[0] === "ON" && recallActive[1] !== undefined && recallActive[1] < indentLevel) {
-            recallActive = ["OFF"];
+        // out-of-header may make recall inactive
+        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel < recallActive[1]) {
+            cardState = ["OFF"];
         }
 
-        // in-header logic
-        if (recallActive[0] === "OFF" && isHeader && hasRecallTag) {
-            recallActive = ["ON", indentLevel];
+        // in-header may make recall active
+        if (recallActive[0] === "OFF" && headerLevel !== 0 && hasRecallTag) {
+            recallActive = ["ON", headerLevel];
         }
 
-        // in-card logic
+        // in-card logic if recall is active
         if (recallActive[0] === "ON") {
-            if (cardState[0] === "OFF" && indentLevel === 0) {
-                cardState = ["ON"];
-                cardBody = [lines[i]];
-            } else if (indentLevel === 0) {
-                const cardText = [cardBody[0], multilineCardSeparator, cardBody[1]].join("\n");
-                const lineNo = i + 1;
-                cards.push([CardType.MultiLineBasic, cardText, lineNo]);
+            // end of card
+            if (cardState[0] === "ON" && (indentLevel === 0 || i === lines.length - 1)) {
+                const cardText = cardBody.join("\n");
+                cards.push([CardType.MultiLineBasic, cardText, cardLineNo, cardBefore]);
                 cardState = ["OFF"];
-            } else {
+            }
+            // beginning of card
+            if (cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ")) {
+                cardState = ["ON"];
+                cardBody = [];
+                cardLineNo = i + 1;
+                cardBefore = lines.slice(Math.max(i - 10, 0), i).join("\n");
+            }
+            // between beginning and end of card
+            if (cardState[0] === "ON") {
                 cardBody.push(lines[i]);
             }
         }
+        // console.log(cards);
     }
     return cards;
 }

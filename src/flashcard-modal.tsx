@@ -357,7 +357,6 @@ export class FlashcardModal extends Modal {
 
         this.flashcardView = this.contentEl.createDiv("div");
         this.flashcardView.setAttribute("id", "sr-flashcard-view");
-
         this.responseDiv = this.contentEl.createDiv("sr-flashcard-response");
 
         this.hardBtn = document.createElement("button");
@@ -420,7 +419,7 @@ export class FlashcardModal extends Modal {
         this.responseDiv.style.display = "grid";
 
         if (this.currentCard.isDue) {
-            this.resetButton.disabled = false;
+            (this.resetButton as HTMLButtonElement).disabled = false;
         }
 
         if (this.currentCard.cardType !== CardType.Cloze) {
@@ -928,12 +927,12 @@ export class Deck {
         }
 
         modal.responseDiv.style.display = "none";
-        modal.resetButton.disabled = true;
+        (modal.resetButton as HTMLButtonElement).disabled = true;
         modal.titleEl.setText(
             `${this.deckName}: ${this.dueFlashcardsCount + this.newFlashcardsCount}`
         );
 
-        modal.answerBtn.style.display = "initial";
+         modal.answerBtn.style.removeProperty("display");
         modal.flashcardView.empty();
         modal.mode = FlashcardModalMode.Front;
 

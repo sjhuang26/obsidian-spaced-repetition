@@ -23,7 +23,7 @@ import {
 import { escapeRegexString, cyrb53 } from "src/utils";
 import { ReviewDeck, ReviewDeckSelectionModal } from "src/review-deck";
 import { t } from "src/lang/helpers";
-import { parse } from "src/parser";
+import {parse, ParseCard} from "src/parser";
 import { appIcon } from "src/icons/appicon";
 
 interface PluginData {
@@ -646,7 +646,7 @@ export default class SRPlugin extends Plugin {
         const noteDeckPath = deckPath;
 
         const now: number = Date.now();
-        const parsedCards: [CardType, string, number][] = parse(
+        const parsedCards: ParseCard[] = parse(
             fileText,
             settings.singleLineCardSeparator,
             settings.singleLineReversedCardSeparator,
@@ -660,6 +660,7 @@ export default class SRPlugin extends Plugin {
             deckPath = noteDeckPath;
             const cardType: CardType = parsedCard[0],
                 lineNo: number = parsedCard[2];
+            const cardContext = parsedCard[3];
             let cardText: string = parsedCard[1];
 
             if (cardText.includes(settings.editLaterTag)) {
@@ -739,33 +740,14 @@ export default class SRPlugin extends Plugin {
             } else {
                 let idx: number;
                 if (cardType === CardType.SingleLineBasic) {
-                    idx = cardText.indexOf(settings.singleLineCardSeparator);
-                    siblingMatches.push([
-                        cardText.substring(0, idx),
-                        cardText.substring(idx + settings.singleLineCardSeparator.length),
-                    ]);
                 } else if (cardType === CardType.SingleLineReversed) {
-                    idx = cardText.indexOf(settings.singleLineReversedCardSeparator);
-                    const side1: string = cardText.substring(0, idx),
-                        side2: string = cardText.substring(
-                            idx + settings.singleLineReversedCardSeparator.length
-                        );
-                    siblingMatches.push([side1, side2]);
-                    siblingMatches.push([side2, side1]);
                 } else if (cardType === CardType.MultiLineBasic) {
-                    idx = cardText.indexOf("\n" + settings.multilineCardSeparator + "\n");
+                    idx = cardText.indexOf("\n");
                     siblingMatches.push([
-                        cardText.substring(0, idx),
-                        cardText.substring(idx + 2 + settings.multilineCardSeparator.length),
+                        cardContext + "\n" + cardText.substring(0, idx),
+                        cardText.substring(idx + 1)
                     ]);
                 } else if (cardType === CardType.MultiLineReversed) {
-                    idx = cardText.indexOf("\n" + settings.multilineReversedCardSeparator + "\n");
-                    const side1: string = cardText.substring(0, idx),
-                        side2: string = cardText.substring(
-                            idx + 2 + settings.multilineReversedCardSeparator.length
-                        );
-                    siblingMatches.push([side1, side2]);
-                    siblingMatches.push([side2, side1]);
                 }
             }
 
