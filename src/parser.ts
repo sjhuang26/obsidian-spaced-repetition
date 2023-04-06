@@ -48,12 +48,13 @@ export function parse(
         const indentLevel = lines[i].search(/\S|$/);
 
         // represents header: 0 for no header; 1, 2, 3, etc. for header level
-        // count # at beginning of line
+        // count "#" characters at beginning of line
+        // e.g., "## Header" => 2
         const headerLevel = lines[i].match(/^#+/)?.[0].length ?? 0;
 
         // out-of-header may make recall inactive
-        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel < recallActive[1]) {
-            cardState = ["OFF"];
+        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel !== 0 && headerLevel < recallActive[1]) {
+            recallActive = ["OFF"];
         }
 
         // in-header may make recall active
@@ -70,7 +71,7 @@ export function parse(
                 cardState = ["OFF"];
             }
             // beginning of card
-            if (cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ")) {
+             if (cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ") && !(lines[i].startsWith("- {") && lines[i].endsWith("}")) && !lines[i].endsWith(":")) {
                 cardState = ["ON"];
                 cardBody = [];
                 cardLineNo = i + 1;
@@ -81,7 +82,6 @@ export function parse(
                 cardBody.push(lines[i]);
             }
         }
-        // console.log(cards);
     }
     return cards;
 }
