@@ -53,7 +53,7 @@ export function parse(
         const headerLevel = lines[i].match(/^#+/)?.[0].length ?? 0;
 
         // out-of-header may make recall inactive
-        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel !== 0 && headerLevel < recallActive[1]) {
+        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel !== 0 && headerLevel <= recallActive[1]) {
             recallActive = ["OFF"];
         }
 
@@ -62,25 +62,25 @@ export function parse(
             recallActive = ["ON", headerLevel];
         }
 
-        // in-card logic if recall is active
-        if (recallActive[0] === "ON") {
-            // end of card
-            if (cardState[0] === "ON" && (indentLevel === 0 || i === lines.length - 1)) {
+        // end of card
+        if (cardState[0] === "ON" && (indentLevel === 0 || i === lines.length - 1)) {
+            // empty cards do not count
+            if (0 < cardBody.length) {
                 const cardText = cardBody.join("\n");
                 cards.push([CardType.MultiLineBasic, cardText, cardLineNo, cardBefore]);
-                cardState = ["OFF"];
             }
-            // beginning of card
-             if (cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ") && !(lines[i].startsWith("- {") && lines[i].endsWith("}")) && !lines[i].endsWith(":")) {
-                cardState = ["ON"];
-                cardBody = [];
-                cardLineNo = i + 1;
-                cardBefore = lines.slice(Math.max(i - 10, 0), i).join("\n");
-            }
-            // between beginning and end of card
-            if (cardState[0] === "ON") {
-                cardBody.push(lines[i]);
-            }
+            cardState = ["OFF"];
+        }
+        // beginning of card
+        if (recallActive[0] === "ON" && cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ") && !(lines[i].startsWith("- {") && lines[i].endsWith("}")) && !lines[i].startsWith("- //") && !lines[i].endsWith(":")) {
+            cardState = ["ON"];
+            cardBody = [];
+            cardLineNo = i + 1;
+            cardBefore = lines.slice(Math.max(i - 10, 0), i).join("\n");
+        }
+        // between beginning and end of card
+        if (cardState[0] === "ON") {
+            cardBody.push(lines[i]);
         }
     }
     return cards;
