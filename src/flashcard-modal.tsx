@@ -932,7 +932,7 @@ export class Deck {
             `${this.deckName}: ${this.dueFlashcardsCount + this.newFlashcardsCount}`
         );
 
-         modal.answerBtn.style.removeProperty("display");
+        modal.answerBtn.style.removeProperty("display");
         modal.flashcardView.empty();
         modal.mode = FlashcardModalMode.Front;
 

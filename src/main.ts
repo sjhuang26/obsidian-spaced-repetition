@@ -23,7 +23,7 @@ import {
 import { escapeRegexString, cyrb53 } from "src/utils";
 import { ReviewDeck, ReviewDeckSelectionModal } from "src/review-deck";
 import { t } from "src/lang/helpers";
-import {parse, ParseCard} from "src/parser";
+import { parse, ParseCard } from "src/parser";
 import { appIcon } from "src/icons/appicon";
 
 interface PluginData {
@@ -745,7 +745,7 @@ export default class SRPlugin extends Plugin {
                     idx = cardText.indexOf("\n");
                     siblingMatches.push([
                         cardContext + "\n" + cardText.substring(0, idx),
-                        cardText.substring(idx + 1)
+                        cardText.substring(idx + 1),
                     ]);
                 } else if (cardType === CardType.MultiLineReversed) {
                 }

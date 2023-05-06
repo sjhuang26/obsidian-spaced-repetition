@@ -1,4 +1,4 @@
-import {CardType} from "src/scheduling";
+import { CardType } from "src/scheduling";
 
 type RecallState = ["OFF"] | ["ON", null] | ["ON", number];
 
@@ -53,7 +53,12 @@ export function parse(
         const headerLevel = lines[i].match(/^#+/)?.[0].length ?? 0;
 
         // out-of-header may make recall inactive
-        if (recallActive[0] === "ON" && recallActive[1] !== null && headerLevel !== 0 && headerLevel <= recallActive[1]) {
+        if (
+            recallActive[0] === "ON" &&
+            recallActive[1] !== null &&
+            headerLevel !== 0 &&
+            headerLevel <= recallActive[1]
+        ) {
             recallActive = ["OFF"];
         }
 
@@ -72,7 +77,15 @@ export function parse(
             cardState = ["OFF"];
         }
         // beginning of card
-        if (recallActive[0] === "ON" && cardState[0] === "OFF" && indentLevel === 0 && lines[i].startsWith("- ") && !(lines[i].startsWith("- {") && lines[i].endsWith("}")) && !lines[i].startsWith("- //") && !lines[i].endsWith(":")) {
+        if (
+            recallActive[0] === "ON" &&
+            cardState[0] === "OFF" &&
+            indentLevel === 0 &&
+            lines[i].startsWith("- ") &&
+            !(lines[i].startsWith("- {") && lines[i].endsWith("}")) &&
+            !lines[i].startsWith("- //") &&
+            !lines[i].endsWith(":")
+        ) {
             cardState = ["ON"];
             cardBody = [];
             cardLineNo = i + 1;
